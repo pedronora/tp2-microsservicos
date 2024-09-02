@@ -1,0 +1,48 @@
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: livrosdb
+      MYSQL_USER: usuario
+      MYSQL_PASSWORD: senha
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - eureka-net
+      
+      
+  eureka-server:
+    image: eurekaserver
+    build:
+      context: ./eurekaServer
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+    networks:
+      - eureka-net
+
+  livros-service:
+    image: ms1-livros
+    build:
+      context: ./livros-service
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/livrosdb
+    depends_on:
+      - eureka-server
+      - mysql
+    networks:
+      - eureka-net
+
+networks:
+  eureka-net:
+  
+volumes:
+  mysql-data:
